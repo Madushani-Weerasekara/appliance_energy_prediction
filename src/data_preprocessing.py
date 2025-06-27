@@ -1,4 +1,4 @@
-# Nodule for loading and cleaning the raw data
+# Module for loading and cleaning the raw data
 # Handle missing values
 # Remove/Impute outliers
 # Normalize features(MinMax/Standard)
@@ -71,28 +71,30 @@ class DataPreprocessor:
         print(f"\nBefore capping: min={before_min}, max={before_max}")
         print(f"\nAfter capping: min={after_min}, max={after_max}")
 
-    def scale_features(self, columns):
+    def scale_features(self):
         """
         Scale specific columns using StandardScaler.
         Creates new columns with '_scaled' suffix.
 
         """
+        # Select all numeric columns except 'Appliances' and 'Appliances_capped'
+        exclude_cols = ['Appliances', 'Appliances_capped']
+        numeric_cols = [
+            col for col in self.df.columns
+            if pd.api.types.is_numeric_dtype(self.df[col]) and col not in exclude_cols
+        ]
+
         scaler = StandardScaler()
-        scaled_values = scaler.fit_transform(self.df[columns])
+        scaled_values = scaler.fit_transform(self.df[numeric_cols])
 
-        for i, col in enumerate(columns):
+        for i, col in enumerate(numeric_cols):
             self.df[col  + '_scaled'] = scaled_values[:, i]
-        print(f"\nScaled columns: {columns} (zero mean unit variance)")
+        print(f"\nScaled columns: {numeric_cols} (zero mean unit variance)")
 
+    def get_data(self):
+        # Returns the  proessed DataFrame
 
-
-
-    
-
-
-
-
-
+        return self.df
 
 
 
@@ -107,6 +109,7 @@ if __name__ == "__main__":
     processor.detect_missing_values()
     processor.handle_missing_values()
     processor.handle_outliers()
-    # processor.scale_features(columns=['SNM'])
+    processor.scale_features()
     print(processor.df.head(3))
+    df_clean = processor.get_data()
  
