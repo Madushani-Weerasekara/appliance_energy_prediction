@@ -1,16 +1,29 @@
-"""
-Main pipeline script to run the full workflow for appliance energy prediction.
-Calls modular OOP classes for preprocessing, feature engineering, etc.
 
 """
+Main workflow runner for the Appliance Energy Prediction Pipeline
+Steps:
+1. Preprocess & feature engineer
+2. Train model
+3. Evaluate & print results
+"""
 
-import pandas as pd
-from src.components.data_preprocessing import DataPreprocessor
+import numpy as np
+from src.components.data_transformation import DataTransformation
+from src.logger import setup_logger
+from src.exception import CustomException
 
-# STEP 1: Data Preprocessing
-print("\n=== Step 1: Data Preprocessing ===")
-preprocessor = DataPreprocessor("data/raw/energy_data_set.csv")
-preprocessor.run_all("data/processed/processed_energy_data_set.csv")
+logger = setup_logger()
+logger.info("Starting main pipeline...")
+
+# 1. Preprocessing
+transformer = DataTransformation()
+status = transformer.run(
+    raw_path="data/raw/energy_data_set.csv"
+)
+
+logger.info("Data preprocessing complete.")
+
+
 
 
 
