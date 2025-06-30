@@ -119,6 +119,10 @@ class DataTransformation:
             df.dropna(inplace=True)
             logger.info("Feature engineering complete.")
 
+            if 'Appliances' in df.columns:
+                df = df.drop(columns=['Appliances'])
+                logger.info("Removed 'Appliances' column to prevent data leakage.")
+
             # Encode categoricals
             df = self.encode_categoricals(df)
             logger.info("Categorical encoding complete.")
