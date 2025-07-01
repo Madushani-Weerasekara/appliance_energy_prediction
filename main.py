@@ -12,7 +12,6 @@ import numpy as np
 import optuna
 from src.components.data_transformation import DataTransformation
 from src.components.ml_model_trainer import ModelTrainer
-from src.logger import setup_logger
 from src.exception import CustomException
 from src.components.tuner import objective
 
@@ -24,10 +23,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
 import pickle
-from skorch.callbacks import EarlyStopping
-
-
-logger = setup_logger()
+from functools import partial
+from src.logger import logger
 
 def main():
     print(""" ==================================================================
@@ -39,37 +36,31 @@ def main():
         # === 1. Data Transformation (Preprocessing) ===
         logger.info("Step 1: Running data transformation...")
         transformer = DataTransformation()
-        transformer.run(raw_path="data/raw/energy_data_set.csv")
+        transformer.run_dl(raw_path="data/raw/energy_data_set.csv")
         logger.info("Data preprocessing completed successfully.")
 
-        # === 2. Load Processed Data ===
-        train_arr = np.load("data/processed/train_arr.npy")
-        test_arr = np.load("data/processed/test_arr.npy")
-        X_train = train_arr[:, :-1]
-        y_train = train_arr[:, -1].reshape(-1, 1)
-        X_test = test_arr[:, :-1]
-        y_test = test_arr[:, -1].reshape(-1, 1)
-
-    except:
-        pass
+            
         
-    
-    # DL Models 
-    if hasattr(objective, "best_score"):
-        del objective.best_score
-    if hasattr(objective, "best_model_path"):
-        del objective.best_model_path
+        # DL Models 
+        if hasattr(objective, "best_score"):
+            del objective.best_score
+        if hasattr(objective, "best_model_path"):
+            del objective.best_model_path
 
-    study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=20)
+        study = optuna.create_study(direction="minimize")
+        #study.optimize(objective, n_trials=5)
+        study.optimize(partial(objective, model='lstm'), n_trials=10)
 
-    print("Best trial:")
-    print(f"  Value (RMSE): {study.best_trial.value}")
-    print("  Params: ")
-    for key, value in study.best_trial.params.items():
-        print(f"    {key}: {value}")
-    print(f"Best model saved at: {objective.best_model_path}")
 
+        print("Best trial:")
+        print(f"  Value (RMSE): {study.best_trial.value}")
+        print("  Params: ")
+        for key, value in study.best_trial.params.items():
+            print(f"    {key}: {value}")
+        print(f"Best model saved at: {objective.best_model_path}")
+
+    except Exception as e:
+        logger.info(f"Error occurred during pipeline execution. {e}")
 
 
 if __name__ == "__main__":
