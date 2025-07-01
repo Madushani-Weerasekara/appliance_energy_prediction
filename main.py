@@ -21,9 +21,11 @@ import torch.optim as optim
 from src.components.network import LSTMNetwork, GRUNetwork, CNNLSTMNetwork
 from src.utils import save_object, load_object, save_model, load_model,   create_sequences, evaluate_model
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
 import pickle
+from skorch.callbacks import EarlyStopping
+
 
 logger = setup_logger()
 
@@ -83,11 +85,11 @@ def main():
                     module__input_dim=X_train.shape[1],
                     module__output_dim=1,
                     module__hidden_size=64,
-                    module__num_layers=1,
                     optimizer=optim.Adam,
                     max_epochs=20,
                     lr=0.01,
-                    device='cuda' if torch.cuda.is_available() else 'cpu'
+                    device='cuda' if torch.cuda.is_available() else 'cpu',
+                    callbacks=[EarlyStopping(patience=5)]
                 )
                 X_train_fit = X_train_seq.astype(np.float32)
                 y_train_fit = y_train_seq.astype(np.float32)
@@ -103,11 +105,11 @@ def main():
                     module__input_dim=X_train.shape[1],
                     module__output_dim=1,
                     module__hidden_size=64,
-                    module__num_layers=1,
                     optimizer=optim.Adam,
                     max_epochs=20,
                     lr=0.01,
-                    device='cuda' if torch.cuda.is_available() else 'cpu'
+                    device='cuda' if torch.cuda.is_available() else 'cpu',
+                    callbacks=[EarlyStopping(patience=5)]
                 )
                 X_train_fit = X_train_seq.astype(np.float32)
                 y_train_fit = y_train_seq.astype(np.float32)
@@ -129,7 +131,8 @@ def main():
                     optimizer=optim.Adam,
                     max_epochs=20,
                     lr=0.01,
-                    device='cuda' if torch.cuda.is_available() else 'cpu'
+                    device='cuda' if torch.cuda.is_available() else 'cpu',
+                    callbacks=[EarlyStopping(patience=5)]
                 )
                 X_train_fit = X_train_seq.astype(np.float32)
                 y_train_fit = y_train_seq.astype(np.float32)
@@ -146,6 +149,9 @@ def main():
                 'module__dropout': [0.0, 0.2, 0.4],
                 'lr': [0.01, 0.001],
                 'max_epochs': [20, 30],
+                'batch_size': [32, 64, 128],
+                'module__num_layers': [1, 2]
+
             }
             gs = GridSearchCV(net, params, refit=True, cv=3, scoring='r2', verbose=2)
             gs.fit(X_train_fit, y_train_fit)
@@ -162,8 +168,12 @@ def main():
 
             test_r2 = r2_score(y_test_real, y_pred_real)
             test_rmse = np.sqrt(mean_squared_error(y_test_real, y_pred_real))
+            mae = mean_absolute_error(y_test_real, y_pred_real)
+            mape = np.mean(np.abs((y_test_real - y_pred_real) / y_test_real)) * 100
             print(f"Final test R² score: {test_r2:.4f}")
             print(f"Final test RMSE: {test_rmse:.4f}")
+            print(f"Final test MAE: {mae:.4f}")
+            print(f"Final test MAPE: {mape:.2f}%")
 
             print("="*40)
             print(f"Best Grid Search Params: {gs.best_params_}")
@@ -174,7 +184,7 @@ def main():
 
             # === Save the best model ===
             best_model = gs.best_estimator_
-            save_model(best_model, "artifacts/best_deep_model.pkl")
+            torch.save(best_model, "artifacts/dl_model.pt")
             logger.info("Best deep learning model saved to artifacts/best_deep_model.pkl")
 
             logger.info("=== Appliance Energy Prediction Pipeline Completed ===")
@@ -189,7 +199,7 @@ def main():
         logger.error(f"Unexpected error in pipeline: {e}")
         print(f"Unexpected error: {e}")
 
-        
+
 
 if __name__ == "__main__":
     main()
