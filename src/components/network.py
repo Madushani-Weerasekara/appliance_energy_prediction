@@ -6,25 +6,7 @@ from skorch import NeuralNetRegressor
 import torch.optim as optim
 from sklearn.model_selection import GridSearchCV
 
-# === MLP ARCHITECTURE ===
-class MLPNetwork(nn.Module):
-    """
-    MLP for regression tasks.
-    Compatible with skorch and sklearn's GridSearchCV.
-    """
-    def __init__(self, input_dim, hidden_size=64, output_dim=1, dropout=0.3):
-        super(MLPNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_dim, hidden_size) # Hidden layer
-        self.dropout = nn.Dropout(dropout)
-        self.fc2 = nn.Linear(hidden_size, output_dim) # Output layer
-
-    def forward(self, X):
-        x = self.fc1(X)
-        x = F.relu(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        return x  # For regression, no activation
-
+ 
 
 # === LSTM ARCHITECTURE ===
 class LSTMNetwork(nn.Module):
