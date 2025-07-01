@@ -22,6 +22,8 @@ from src.components.network import LSTMNetwork, GRUNetwork, CNNLSTMNetwork
 from src.utils import save_object, load_object, save_model, load_model,   create_sequences, evaluate_model
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.preprocessing import MinMaxScaler
+import pickle
 
 logger = setup_logger()
 
@@ -42,33 +44,40 @@ def main():
         y_train = train_arr[:, -1].reshape(-1, 1)
         X_test = test_arr[:, :-1]
         y_test = test_arr[:, -1].reshape(-1, 1)
-        
+
         # === 3. Choose Classic ML or Deep Learning Model ===
         PIPELINE_TYPE = "DL"   # "ML" for classic scikit-learn pipeline, "DL" for deep learning
-        
+
+        # === Target Scaling for DL only ===
+        if PIPELINE_TYPE == "DL":
+            y_scaler = MinMaxScaler()
+            y_train_scaled = y_scaler.fit_transform(y_train)
+            y_test_scaled = y_scaler.transform(y_test)
+            # Save scaler for inference
+            with open("artifacts/target_scaler.pkl", "wb") as f:
+                pickle.dump(y_scaler, f)
+        else:
+            y_train_scaled = y_train
+            y_test_scaled = y_test
+
         if PIPELINE_TYPE == "ML":
             logger.info("Using classic ModelTrainer pipeline (scikit-learn models).")
             model_trainer = ModelTrainer()
-            final_r2, best_model = model_trainer.initiate_model_trainer(train_arr, test_arr)  # <-- Note change here!
-            # (Optional - usually not needed as ModelTrainer already saves, but for consistency:)
-            from src.utils import save_model
+            final_r2, best_model = model_trainer.initiate_model_trainer(train_arr, test_arr)
             save_model(best_model, "artifacts/best_ml_model.pkl")
             logger.info("Best ML model saved to artifacts/best_ml_model.pkl")
             logger.info(f"Pipeline finished successfully! Final test R² score: {final_r2:.4f}")
             print(f"Final test R² score: {final_r2:.4f}")
 
-        
         elif PIPELINE_TYPE == "DL":
             # ---- Deep Learning pipeline using skorch ----
-            # === Choose Model Type ===
             MODEL_TYPE = 'LSTM'  # Options: 'LSTM', 'GRU', 'CNN-LSTM'
             SEQ_LEN = 10        # For sequence models
 
-
             if MODEL_TYPE == 'LSTM':
                 logger.info("Using LSTM for time-series regression.")
-                X_train_seq, y_train_seq = create_sequences(X_train, y_train, SEQ_LEN)
-                X_test_seq, y_test_seq = create_sequences(X_test, y_test, SEQ_LEN)
+                X_train_seq, y_train_seq = create_sequences(X_train, y_train_scaled, SEQ_LEN)
+                X_test_seq, y_test_seq = create_sequences(X_test, y_test_scaled, SEQ_LEN)
                 net = NeuralNetRegressor(
                     LSTMNetwork,
                     module__input_dim=X_train.shape[1],
@@ -87,8 +96,8 @@ def main():
 
             elif MODEL_TYPE == 'GRU':
                 logger.info("Using GRU for time-series regression.")
-                X_train_seq, y_train_seq = create_sequences(X_train, y_train, SEQ_LEN)
-                X_test_seq, y_test_seq = create_sequences(X_test, y_test, SEQ_LEN)
+                X_train_seq, y_train_seq = create_sequences(X_train, y_train_scaled, SEQ_LEN)
+                X_test_seq, y_test_seq = create_sequences(X_test, y_test_scaled, SEQ_LEN)
                 net = NeuralNetRegressor(
                     GRUNetwork,
                     module__input_dim=X_train.shape[1],
@@ -107,8 +116,8 @@ def main():
 
             elif MODEL_TYPE == 'CNN-LSTM':
                 logger.info("Using CNN-LSTM hybrid for time-series regression.")
-                X_train_seq, y_train_seq = create_sequences(X_train, y_train, SEQ_LEN)
-                X_test_seq, y_test_seq = create_sequences(X_test, y_test, SEQ_LEN)
+                X_train_seq, y_train_seq = create_sequences(X_train, y_train_scaled, SEQ_LEN)
+                X_test_seq, y_test_seq = create_sequences(X_test, y_test_scaled, SEQ_LEN)
                 net = NeuralNetRegressor(
                     CNNLSTMNetwork,
                     module__input_dim=X_train.shape[1],
@@ -141,15 +150,20 @@ def main():
             gs = GridSearchCV(net, params, refit=True, cv=3, scoring='r2', verbose=2)
             gs.fit(X_train_fit, y_train_fit)
 
-            logger.info(f"Best params: {gs.best_params_}")
-            logger.info(f"Best R² score (CV val): {gs.best_score_:.4f}")
+            print(f"Best params: {gs.best_params_}")
+            print(f"Best R² score (CV val): {gs.best_score_:.4f}")
 
-            # === Test Set Evaluation ===
+            # === Test Set Evaluation (Inverse transform) ===
             y_pred = gs.predict(X_test_fit)
-            test_r2 = r2_score(y_test_fit, y_pred)
-            test_rmse = np.sqrt(mean_squared_error(y_test_fit, y_pred))
-            logger.info(f"Final test R² score: {test_r2:.4f}")
-            logger.info(f"Final test RMSE: {test_rmse:.4f}")
+            with open("artifacts/target_scaler.pkl", "rb") as f:
+                y_scaler = pickle.load(f)
+            y_pred_real = y_scaler.inverse_transform(y_pred.reshape(-1, 1))
+            y_test_real = y_scaler.inverse_transform(y_test_fit.reshape(-1, 1))
+
+            test_r2 = r2_score(y_test_real, y_pred_real)
+            test_rmse = np.sqrt(mean_squared_error(y_test_real, y_pred_real))
+            print(f"Final test R² score: {test_r2:.4f}")
+            print(f"Final test RMSE: {test_rmse:.4f}")
 
             print("="*40)
             print(f"Best Grid Search Params: {gs.best_params_}")
@@ -175,9 +189,7 @@ def main():
         logger.error(f"Unexpected error in pipeline: {e}")
         print(f"Unexpected error: {e}")
 
-
-
-
+        
 
 if __name__ == "__main__":
     main()
