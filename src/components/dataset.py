@@ -35,6 +35,7 @@ from sklearn.preprocessing import StandardScaler
 def get_loaders_from_dataframe(
     df, target_col='Appliances_capped', seq_len=10, batch_size=64, val_size=0.2, shuffle=True
     ):
+    df = df.drop(columns=['date'])
     # Move target to last column for easy slicing
     cols = [col for col in df.columns if col != target_col] + [target_col]
     df = df[cols]

@@ -20,13 +20,9 @@ import holidays
 import os
 import sys
 
-from src.logger import setup_logger
 from src.exception import CustomException
 from sklearn.ensemble import RandomForestRegressor
-  
-
-
-logger = setup_logger()
+from src.logger import logger
  
 
 @dataclass
@@ -207,7 +203,7 @@ class DataTransformation:
             logger.error(f"Error in split_by_time: {e}")
             raise CustomException(f"Error in split_by_time: {e}", error=e)
         
-    def run(self, raw_path, target_column='Appliances_capped', num_features=15):
+    def run(self, raw_path, target_column='Appliances_capped', num_features=20):
         """
         Complete all steps: preprocess, feature engineer, split, feature select, scale, save.
         """
@@ -219,6 +215,9 @@ class DataTransformation:
 
             # 2. Preprocess and feature engineer
             df = self.preprocess_and_engineer(df)
+            logger.info(f"dataframe shape {df.shape}")
+            df.to_csv('data/processed/preprocessed_data.csv', index=True)
+            logger.info("Preprocessing and feature engineering complete. Data saved to data/processed/preprocessed_data.csv")
 
             # 3. Split by time
             train_df, test_df = self.split_by_time(df, train_frac=0.8)
@@ -278,6 +277,45 @@ class DataTransformation:
         except Exception as e:
             logger.error(f"Pipeline error: {e}")
             raise CustomException(f"Pipeline error: {e}", error=e)
+        
+    
+    def run_dl(self, raw_path, target_column='Appliances_capped', num_features=20):
+        """
+        Complete all steps: preprocess, feature engineer, feature select, and save all data as CSV (no split).
+        """
+        try:
+            # 1. Load data
+            df = pd.read_csv(raw_path, parse_dates=['date'])
+            df.set_index('date', inplace=True)
+            logger.info(f"Loaded data from {raw_path}. Shape: {df.shape}")
+
+            # 2. Preprocess and feature engineer
+            df = self.preprocess_and_engineer(df)
+            logger.info(f"DataFrame shape after preprocessing: {df.shape}")
+
+            # 3. Feature selection (correlation, then tree-based) on full set
+            selected_corr = self.correlation_selection(df, target_col=target_column)
+            selected_tree = self.feature_selection_tree(df, selected_corr, target_col=target_column, num_features=num_features)
+            logger.info(f"Final selected features: {selected_tree}")
+
+            # 4. Prepare final DataFrame (features + target only)
+            final_df = df[selected_tree].copy()
+            final_df[target_column] = df[target_column]
+            # Drop 'date' column if it's present (shouldn't be, as it's index)
+            if 'date' in final_df.columns:
+                final_df = final_df.drop(columns=['date'])
+
+            # 5. Save the full processed DataFrame as CSV
+            os.makedirs('data/processed', exist_ok=True)
+            final_df.to_csv('data/processed/preprocessed_data.csv', index=True)
+            logger.info("Preprocessed data (all rows) saved to data/processed/preprocessed_data.csv")
+
+            return final_df
+
+        except Exception as e:
+            logger.error(f"Error in preprocessing and saving: {e}")
+            raise
+
         
 
 

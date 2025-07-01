@@ -22,17 +22,12 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV
-
-
-# === Custom modules for logging and error handling ===
-from src.logger import setup_logger            # Project logging setup
+from src.logger import logger
 from src.exception import CustomException      # Project-wide exception handling
 
 # Utilities (custom)
 from src.utils import save_object, load_object, evaluate_model
 
-# Initialize logger
-logger = setup_logger()
 
 
 @dataclass

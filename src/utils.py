@@ -8,10 +8,9 @@ import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score
 from src.exception import CustomException
-from src.logger import setup_logger
+from src.logger import logger
 
 # Initialize logger
-logger = setup_logger()
 
 def save_object(file_path, obj):
     """

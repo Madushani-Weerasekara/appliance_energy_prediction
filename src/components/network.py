@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class LSTMRegression(nn.Module):
     def __init__(self, input_dim, hidden_dim, num_layers, output_dim, dropout=0.2):
@@ -13,6 +14,9 @@ class LSTMRegression(nn.Module):
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, 
                             batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_dim, output_dim)
+        self.name = "LSTM Regression"
+        self.to(device=device)
+
 
     def forward(self, x):
         # x: [batch_size, seq_len, input_dim]
@@ -23,15 +27,19 @@ class LSTMRegression(nn.Module):
         out = self.fc(out)
         return out
 
+
+
 class GRURegression(nn.Module):
-    def _init_(self, input_dim, hidden_dim, num_layers, output_dim, dropout=0.2):
-        super(GRURegression, self)._init_()
+    def __init__(self, input_dim, hidden_dim, num_layers, output_dim, dropout=0.2):
+        super(GRURegression, self).__init__()
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
 
         self.gru = nn.GRU(input_dim, hidden_dim, num_layers, 
                           batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_dim, output_dim)
+        self.name = "GRU Regression"
+        self.to(device=device)
 
     def forward(self, x):
         # x: [batch_size, seq_len, input_dim]
@@ -42,10 +50,11 @@ class GRURegression(nn.Module):
         return out
 
 
+
 class CNNLSTMRegression(nn.Module):
-    def _init_(self, input_dim, cnn_out_channels, kernel_size, lstm_hidden_dim, 
+    def __init__(self, input_dim, cnn_out_channels, kernel_size, lstm_hidden_dim, 
                  lstm_num_layers, output_dim, dropout=0.2):
-        super(CNNLSTMRegression, self)._init_()
+        super(CNNLSTMRegression, self).__init__()
         self.cnn = nn.Conv1d(in_channels=input_dim, 
                              out_channels=cnn_out_channels,
                              kernel_size=kernel_size,
@@ -57,6 +66,8 @@ class CNNLSTMRegression(nn.Module):
                             batch_first=True, 
                             dropout=dropout)
         self.fc = nn.Linear(lstm_hidden_dim, output_dim)
+        self.name = "CNN-LSTM Regression"
+        self.to(device=device)
 
     def forward(self, x):
         # x: [batch, seq_len, input_dim]
