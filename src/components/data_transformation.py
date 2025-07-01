@@ -240,6 +240,18 @@ class DataTransformation:
             y_train = train_df[target_column]
             y_test = test_df[target_column]
 
+            # Save preprocessed train and test DataFrames as CSV files
+            train_df_out = X_train.copy()
+            train_df_out[target_column] = y_train
+            test_df_out = X_test.copy()
+            test_df_out[target_column] = y_test
+
+            os.makedirs('data/processed', exist_ok=True)
+            train_df_out.to_csv('data/processed/train_preprocessed.csv', index=True)
+            test_df_out.to_csv('data/processed/test_preprocessed.csv', index=True)
+            logger.info("Saved preprocessed train DataFrame to data/processed/train_processed.csv")
+            logger.info("Saved preprocessed test DataFrame to data/processed/test_processed.csv")
+
             # 7. Scaling
             scaler = StandardScaler()
             X_train_scaled = scaler.fit_transform(X_train)
