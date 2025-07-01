@@ -1,3 +1,18 @@
+# Custom ignores for this project
+model_test.ipynb
+
+# Ignore Python cache and environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv
+
+# Ignore data and artifacts (optional, if you want)
+artifacts/
+data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

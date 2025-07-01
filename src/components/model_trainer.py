@@ -132,19 +132,19 @@ class ModelTrainer:
             if best_model_score < 0.6:
                 raise CustomException("No model met minimum performance threshold (R² < 0.6)", sys)
 
+
             logger.info("Saving best model to disk")
             save_object(
-                file_path=self.model_trainer_config.trained_model_file_path,
+                file_path="artifacts/best_ml_model.pkl",  # More explicit name!
                 obj=best_model
             )
 
-            logger.info("Start model evaluation")
-            best_model.fit(X_train, y_train)
             predictions = best_model.predict(X_test)
             final_r2 = r2_score(y_test, predictions)
 
             logger.info(f"Final R² Score on test set: {final_r2:.4f}")
-            return final_r2
+            return final_r2, best_model
+
 
         except Exception as e:
             logger.error("Error in initiate_model_trainer")

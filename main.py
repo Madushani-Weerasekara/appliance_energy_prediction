@@ -18,7 +18,7 @@ from src.exception import CustomException
 import torch
 from skorch import NeuralNetRegressor
 import torch.optim as optim
-from src.components.network import MLPNetwork, LSTMNetwork, GRUNetwork, CNNLSTMNetwork
+from src.components.network import LSTMNetwork, GRUNetwork, CNNLSTMNetwork
 from src.utils import save_object, load_object, save_model, load_model,   create_sequences, evaluate_model
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score, mean_squared_error
@@ -47,12 +47,16 @@ def main():
         PIPELINE_TYPE = "DL"   # "ML" for classic scikit-learn pipeline, "DL" for deep learning
         
         if PIPELINE_TYPE == "ML":
-            # ---- Classic ML pipeline using ModelTrainer ----
             logger.info("Using classic ModelTrainer pipeline (scikit-learn models).")
             model_trainer = ModelTrainer()
-            final_r2 = model_trainer.initiate_model_trainer(train_arr, test_arr)
+            final_r2, best_model = model_trainer.initiate_model_trainer(train_arr, test_arr)  # <-- Note change here!
+            # (Optional - usually not needed as ModelTrainer already saves, but for consistency:)
+            from src.utils import save_model
+            save_model(best_model, "artifacts/best_ml_model.pkl")
+            logger.info("Best ML model saved to artifacts/best_ml_model.pkl")
             logger.info(f"Pipeline finished successfully! Final test R² score: {final_r2:.4f}")
             print(f"Final test R² score: {final_r2:.4f}")
+
         
         elif PIPELINE_TYPE == "DL":
             # ---- Deep Learning pipeline using skorch ----
@@ -153,6 +157,12 @@ def main():
             print(f"Test R² Score: {test_r2:.4f}")
             print(f"Test RMSE: {test_rmse:.4f}")
             print("="*40)
+
+            # === Save the best model ===
+            best_model = gs.best_estimator_
+            save_model(best_model, "artifacts/best_deep_model.pkl")
+            logger.info("Best deep learning model saved to artifacts/best_deep_model.pkl")
+
             logger.info("=== Appliance Energy Prediction Pipeline Completed ===")
 
         else:
