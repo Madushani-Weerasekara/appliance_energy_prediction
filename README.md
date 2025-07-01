@@ -21,3 +21,9 @@ This project predicts household appliance energy consumption using deep learning
 git clone https://github.com/yourusername/appliance_energy_prediction.git
 cd appliance_energy_prediction
 ```
+
+Data
+
+Download the Appliance Energy Prediction Data Set (UCI)
+
+Place the raw file as data/raw/energy_data_set.csv
