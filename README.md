@@ -18,7 +18,7 @@ This project predicts household appliance energy consumption using deep learning
 ### 1. _Clone the repository_
 
 ```bash
-git clone https://github.com/yourusername/appliance_energy_prediction.git
+git clone https://github.com/Madushani-Weerasekara/appliance_energy_prediction
 cd appliance_energy_prediction
 ```
 
