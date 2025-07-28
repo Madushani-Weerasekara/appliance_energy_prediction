@@ -20,9 +20,9 @@ class SequenceDataset(Dataset):
 def create_sequences(df, seq_len=24, target_col='target'):
     data = df.values
     X, y = [], []
-    for i in range(len(data) - seq_len):
-        X.append(data[i:i+seq_len, :-1])    # all feature columns, last 'seq_len' timesteps
-        y.append(data[i+seq_len, -1])       # target value AFTER the window
+    for i in range(len(data) - seq_len + 1):
+        X.append(data[i:i+seq_len, :-1])    # features for this window
+        y.append(data[i+seq_len-1, -1])     # label at the same time as last step
     return np.array(X), np.array(y).reshape(-1, 1)
     
 
