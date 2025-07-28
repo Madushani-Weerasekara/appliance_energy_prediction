@@ -9,6 +9,7 @@ from src.components.trainer import train_lstm, evaluate_model
 
 
 def objective(trial, model='lstm'):
+    
     df = pd.read_csv("data/processed/preprocessed_data.csv")
     # 1. Hyperparameter suggestions
     hidden_dim = trial.suggest_int('hidden_dim', 16, 128)
@@ -49,8 +50,8 @@ def objective(trial, model='lstm'):
                                   lstm_hidden_dim=lstm_hidden_dim, lstm_num_layers=lstm_num_layers, output_dim=output_dim,
                                     dropout=dropout
     )
-
-    model = train_lstm(model, train_loader, val_loader, num_epochs=50, lr=lr, device='cuda')
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    model = train_lstm(model, optimizer, train_loader, val_loader, num_epochs=50, lr=lr, device='cuda')
 
     # 4. Evaluate
     metrics = evaluate_model(model, val_loader, y_scaler, device='cuda')
@@ -61,7 +62,7 @@ def objective(trial, model='lstm'):
         print(f"\nNew best model at trial {trial.number}: RMSE={score:.4f}")
         save_path = f"artifacts\\best_{model.name}_model_trial_{trial.number}_rmse{score:.4f}.pt"
 
-        torch.save(model.state_dict(), save_path)
+        model.save_checkpoint(optimizer, save_path)
         joblib.dump(x_scaler, f"x_scaler_trial.pkl")
         joblib.dump(y_scaler, f"y_scaler_trial.pkl")
         objective.best_score = score

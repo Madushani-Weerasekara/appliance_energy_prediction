@@ -10,10 +10,10 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from src.components.network import LSTMRegression, GRURegression, CNNLSTMRegression
 
 
-def train_lstm(model, train_loader, val_loader, num_epochs=50, lr=1e-3, device='cuda'):
+def train_lstm(model, optimizer, train_loader, val_loader, num_epochs=50, lr=1e-3, device='cuda'):
     model = model.to(device)
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    
     
     for epoch in range(num_epochs):
         model.train()
