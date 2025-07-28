@@ -26,6 +26,20 @@ class LSTMRegression(nn.Module):
         out = out[:, -1, :]  # Take only last time step's output
         out = self.fc(out)
         return out
+    
+    def save_checkpoint(self, optimizer, path):
+        checkpoint = {
+            'model_state_dict': self.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+        }
+        torch.save(checkpoint, path)
+        print(f"Checkpoint saved to {path}")
+
+    def load_checkpoint(self, optimizer, path, device='cpu'):
+        checkpoint = torch.load(path, map_location=device)
+        self.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        print(f"Checkpoint loaded from {path}")
 
 
 
