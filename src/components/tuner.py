@@ -9,7 +9,7 @@ from src.components.trainer import train_lstm, evaluate_model
 
 
 def objective(trial, model='lstm'):
-    df = pd.read_csv("data\\processed\\preprocessed_data.csv")
+    df = pd.read_csv("data/processed/preprocessed_data.csv")
     # 1. Hyperparameter suggestions
     hidden_dim = trial.suggest_int('hidden_dim', 16, 128)
     num_layers = trial.suggest_int('num_layers', 1, 3)
