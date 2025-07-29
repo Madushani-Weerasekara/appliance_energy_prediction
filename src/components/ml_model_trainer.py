@@ -70,7 +70,7 @@ class ModelTrainer:
             models = {
                 "Linear Regression": LinearRegression(),
                 "Random Forest": RandomForestRegressor(),
-                "Gradient Boosting": GradientBoostingRegressor(),
+                # "Gradient Boosting": GradientBoostingRegressor(),
                 "AdaBoost": AdaBoostRegressor(),
                 "Decision Tree": DecisionTreeRegressor(),
                 "K-Nearest Neighbors": KNeighborsRegressor()
@@ -86,11 +86,11 @@ class ModelTrainer:
                     "min_samples_split": [2, 5]
                 },
 
-                "Gradient Boosting": {
-                    "n_estimators": [100, 200],
-                    "learning_rate": [0.05, 0.1],
-                    "max_depth": [3, 5]
-                },
+                #"Gradient Boosting": {
+                    #"n_estimators": [100, 200],
+                    #"learning_rate": [0.05, 0.1],
+                    #"max_depth": [3, 5]
+                #},
 
                 "AdaBoost": {
                     "n_estimators": [50, 100],
